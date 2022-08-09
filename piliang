@@ -1,0 +1,172 @@
+package com.example.demo;
+
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.Charset;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
+public class Java_vpn {
+    public static void main(String[] args) throws Exception {
+        //发送 GET 请求
+        List<String> list = new ArrayList<>();
+        StringBuffer stringBuilder = new StringBuffer();
+        String leiting_vpn ="https://www.lt71126.xyz:20000/api/evmess?";
+        String hedong_vpn ="https://www.hd327658.xyz:20000/api/evmess?";
+        String mifeng_vpn ="https://www.09898434.xyz/api/evmess?deviceid=49c95313d64fb7c5unknown&apps=cd9186e318e291300db27867d958eae5?";
+
+        String xuanfeng_vpn ="https://www.xfjyqirx.xyz:20000/api/evmess?&";
+        int count=0;
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("请输入导出的国产加速器 , 1为雷霆vpn   2为黑洞   3为蜜蜂vpn  4为旋风vpn 默认黑洞 ：");
+        int numbCondition = scanner.nextInt();
+        String url = leiting_vpn;
+        String titleType="";
+        switch (numbCondition){
+            case 1:
+                url = leiting_vpn;
+                titleType="雷霆vpn";
+                break;
+            case 2:
+                url = hedong_vpn;
+                titleType="黑洞vpn";
+                break;
+            case 3:
+                url = mifeng_vpn;
+                titleType="蜜蜂vpn";
+                break;
+            case 4:
+                url = xuanfeng_vpn;
+                titleType="旋风vpn";
+                break;
+            default:
+                url = hedong_vpn;
+                titleType="黑洞vpn";
+                break;
+        }
+        Scanner scanner1 = new Scanner(System.in);
+        System.out.println("请输入导出数量");
+        int sum = scanner1.nextInt();
+        CountDownLatch countDownLatch = new CountDownLatch(sum);
+        StringBuffer stringBuffer = new StringBuffer();
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(20,
+                50,
+                5L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(50),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.CallerRunsPolicy());
+        long start = System.currentTimeMillis();
+        try {
+            for (int i = 0; i < sum; i++) {
+                String finalUrl1 = url;
+                threadPoolExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        String v2ray= Java_vpn.sendGet(finalUrl1);
+                        String key = "";
+                        if (numbCondition==4){
+                            key = "awdtif20190619ti"; //xuanfen KEY
+                        }else {
+                            key = "ks9KUrbWJj46AftX";  //heidong \leiting\mifeng KEY
+                        }
+                        try {
+                            String content = decrypt(v2ray,key)+"\n";
+                            stringBuffer.append(content);
+                            countDownLatch.countDown();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                count++;
+            }
+
+        } catch (Exception e){
+
+        }finally {
+            threadPoolExecutor.shutdown();
+        }
+        countDownLatch.await();
+        long end = System.currentTimeMillis();
+        double time = (end - start)/1000.0;
+        System.out.println("耗时"+time+"秒");
+        String path="D:\\v2ray节点";
+        long timeMillis = System.currentTimeMillis();
+        String title=titleType+"---批量导出"+count+"条节点"+timeMillis;
+        try {
+            // 防止文件建立或读取失败，用catch捕捉错误并打印，也可以throw
+            // 写入Txt文件
+            File writename = new File(path);// 相对路径，如果没有则要建立一个新的output。txt文件
+            if(!writename.exists()){
+                writename.mkdirs();
+            }
+            writename = new File(path+"\\"+title+".txt");// 相对路径，如果没有则要建立一个新的output。txt文件
+            writename.createNewFile(); // 创建新文件
+            BufferedWriter out = new BufferedWriter(new FileWriter(writename));
+            out.write(stringBuffer.toString()); // \r\n即为换行
+            out.flush(); // 把缓存区内容压入文件
+            out.close(); // 最后记得关闭文件
+            System.out.println("节点导出路径为："+path+"\\"+title+".txt");
+            System.out.println("path替换为：  /path/120306182525");
+            System.out.println("path替换为：  /path/120211331422");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static String decrypt(String str, String str2) throws Exception {
+        Cipher instance = Cipher.getInstance("AES/CBC/NoPadding");
+        byte[] bytes = str2.getBytes(Charset.forName("UTF-8"));
+        SecretKeySpec secretKeySpec = new SecretKeySpec(bytes, "AES");
+        byte[] bytes2 = str2.getBytes(Charset.forName("UTF-8"));
+        instance.init(2, secretKeySpec, new IvParameterSpec(bytes2));
+        byte[] doFinal = instance.doFinal(Base64.getDecoder().decode(str));
+        return new String(doFinal, Charset.forName("UTF-8"));
+    }
+
+    public static String sendGet(String url) {
+        String result = "";
+        BufferedReader in = null;
+        try {
+            String urlNameString = url ;
+            URL realUrl = new URL(urlNameString);
+            URLConnection connection = realUrl.openConnection();
+            connection.setRequestProperty("accept", "*/*");
+            connection.setRequestProperty("connection", "Keep-Alive");
+            connection.setRequestProperty("user-agent",
+                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+            // 建立实际的连接
+            connection.connect();
+            // 定义 BufferedReader输入流来读取URL的响应
+            in = new BufferedReader(new InputStreamReader(
+                    connection.getInputStream()));
+            String line;
+            while ((line = in.readLine()) != null) {
+                result += line;
+            }
+        } catch (Exception e) {
+            System.out.println("！" + e);
+            e.printStackTrace();
+        }
+        // 使用finally块来关闭输入流
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+        return result;
+    }
+
+}
+
